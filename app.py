@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from io import BytesIO
-import openai
+from openai import OpenAI
 
 # OpenAI API 키 설정
 client = OpenAI(api_key=st.secrets["api_keys"]["openai"])
