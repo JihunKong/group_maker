@@ -13,16 +13,12 @@ except KeyError:
     st.stop()
 
 def create_groups(df, group_size=4):
-    # 성적을 기준으로 학생들을 정렬
     df_sorted = df.sort_values('성적', ascending=False)
-    
-    # 그룹 수 계산
     num_students = len(df)
     num_groups = num_students // group_size
     if num_students % group_size != 0:
         num_groups += 1
     
-    # 그룹 생성
     groups = [[] for _ in range(num_groups)]
     for i, (_, student) in enumerate(df_sorted.iterrows()):
         group_index = i % num_groups
@@ -55,13 +51,14 @@ def get_gpt_instruction(groups):
 각 모둠에 대해 간략한 분석과 조언을 제공해주세요.
 """
     
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "당신은 교육 전문가이며 학생들의 모둠 활동을 돕는 조언자입니다."},
-            {"role": "user", "content": prompt}
-        ]
-    )
+    with st.spinner('GPT 분석 및 조언을 생성 중입니다...'):
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "당신은 교육 전문가이며 학생들의 모둠 활동을 돕는 조언자입니다."},
+                {"role": "user", "content": prompt}
+            ]
+        )
     
     return response.choices[0].message.content
 
@@ -71,14 +68,16 @@ def main():
     uploaded_file = st.file_uploader("엑셀 파일을 업로드하세요", type="xlsx")
     
     if uploaded_file is not None:
-        df = pd.read_excel(uploaded_file)
-        df.columns = ['이름', '성적']
+        with st.spinner('파일을 처리 중입니다...'):
+            df = pd.read_excel(uploaded_file)
+            df.columns = ['이름', '성적']
         
         st.write("업로드된 데이터:")
         st.write(df)
         
         if st.button("모둠 편성하기"):
-            groups = create_groups(df)
+            with st.spinner('모둠을 편성 중입니다...'):
+                groups = create_groups(df)
             
             st.write("모둠 편성 결과:")
             for i, group in enumerate(groups, 1):
@@ -93,15 +92,27 @@ def main():
             st.write(gpt_analysis)
             
             # 엑셀 파일로 저장
-            output = BytesIO()
-            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                for i, group in enumerate(groups, 1):
-                    group_df = pd.DataFrame(group)
-                    group_df = group_df.sort_values('성적', ascending=False)
-                    group_df['역할'] = ['모둠장'] + [''] * (len(group_df) - 1)
-                    group_df[['이름', '성적', '역할']].to_excel(writer, sheet_name=f'모둠 {i}', index=False)
+            with st.spinner('엑셀 파일을 생성 중입니다...'):
+                output = BytesIO()
+                with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+                    # 전체 학생 명단 시트
+                    df.to_excel(writer, sheet_name='전체 학생 명단', index=False)
+                    
+                    # 각 모둠별 시트
+                    for i, group in enumerate(groups, 1):
+                        group_df = pd.DataFrame(group)
+                        group_df = group_df.sort_values('성적', ascending=False)
+                        group_df['역할'] = ['모둠장'] + [''] * (len(group_df) - 1)
+                        sheet_name = f'모둠 {i}'
+                        group_df[['이름', '성적', '역할']].to_excel(writer, sheet_name=sheet_name, index=False)
+                        
+                        # GPT 조언 추가
+                        worksheet = writer.sheets[sheet_name]
+                        worksheet.write(len(group_df) + 2, 0, 'GPT 분석 및 조언:')
+                        worksheet.write(len(group_df) + 3, 0, gpt_analysis.split(f"모둠 {i}:")[1].split(f"모둠 {i+1}:")[0].strip())
+                
+                output.seek(0)
             
-            output.seek(0)
             st.download_button(
                 label="엑셀 파일 다운로드",
                 data=output,
