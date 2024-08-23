@@ -51,7 +51,7 @@ def get_gpt_instruction(groups):
 """
     
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "당신은 교육 전문가이며 학생들의 모둠 활동을 돕는 조언자입니다."},
             {"role": "user", "content": prompt}
