@@ -5,7 +5,7 @@ from io import BytesIO
 import openai
 
 # OpenAI API 키 설정
-openai.api_key = st.secrets["openai_api_key"]
+client = OpenAI(api_key=st.secrets["api_keys"]["openai"])
 
 def create_groups(df, group_size=4):
     # 성적을 기준으로 학생들을 정렬
