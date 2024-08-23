@@ -5,7 +5,7 @@ from io import BytesIO
 from openai import OpenAI
 
 # OpenAI API 키 설정
-client = OpenAI(api_key=st.secrets["api_keys"]["openai"])
+client = OpenAI(api_key=st.secrets["openai_api_key"])
 
 def create_groups(df, group_size=4):
     # 성적을 기준으로 학생들을 정렬
@@ -50,8 +50,8 @@ def get_gpt_instruction(groups):
 각 모둠에 대해 간략한 분석과 조언을 제공해주세요.
 """
     
-    response = client.chat.completion.create(
-        model="gpt-4o-mini",
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
         messages=[
             {"role": "system", "content": "당신은 교육 전문가이며 학생들의 모둠 활동을 돕는 조언자입니다."},
             {"role": "user", "content": prompt}
