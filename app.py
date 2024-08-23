@@ -48,7 +48,7 @@ def get_gpt_instruction(groups):
 3. 모둠장(성적 최상위자)의 역할
 4. 모둠 활동을 위한 조언
 
-각 모둠에 대해 간략한 분석과 조언을 제공해주세요.
+각 모둠에 대해 '모둠 1:', '모둠 2:' 등의 형식으로 시작하여 간략한 분석과 조언을 제공해주세요.
 """
     
     with st.spinner('GPT 분석 및 조언을 생성 중입니다...'):
@@ -61,6 +61,13 @@ def get_gpt_instruction(groups):
         )
     
     return response.choices[0].message.content
+
+def extract_group_advice(gpt_analysis, group_number):
+    groups = gpt_analysis.split(f"모둠 {group_number}:")
+    if len(groups) > 1:
+        advice = groups[1].split(f"모둠 {group_number + 1}:")[0].strip()
+        return advice
+    return "해당 모둠에 대한 분석을 찾을 수 없습니다."
 
 def main():
     st.title("국어 모둠 편성 도우미")
@@ -109,7 +116,8 @@ def main():
                         # GPT 조언 추가
                         worksheet = writer.sheets[sheet_name]
                         worksheet.write(len(group_df) + 2, 0, 'GPT 분석 및 조언:')
-                        worksheet.write(len(group_df) + 3, 0, gpt_analysis.split(f"모둠 {i}:")[1].split(f"모둠 {i+1}:")[0].strip())
+                        group_advice = extract_group_advice(gpt_analysis, i)
+                        worksheet.write(len(group_df) + 3, 0, group_advice)
                 
                 output.seek(0)
             
