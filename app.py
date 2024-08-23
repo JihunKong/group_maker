@@ -50,7 +50,7 @@ def get_gpt_instruction(groups):
 각 모둠에 대해 간략한 분석과 조언을 제공해주세요.
 """
     
-    response = openai.Chat.Completion.create(
+    response = OpenAI.Chat.Completion.create(
         model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": "당신은 교육 전문가이며 학생들의 모둠 활동을 돕는 조언자입니다."},
